@@ -3,6 +3,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 import time
 import os
+from icecream import ic
 # Importando PyTube
 from pytube import YouTube
 
@@ -37,7 +38,7 @@ class MusicDownloadHistory:
 # Função de Print em FOR 
     def display_history(self):
         for entry in self.history:
-            print(f"Title: {entry['title']}, URL: {entry['url']}")
+            ic(f"{entry['title']}, {entry['url']}")
 # Variavel global      
 history = MusicDownloadHistory()
 
@@ -45,33 +46,36 @@ history = MusicDownloadHistory()
 
 def new_download():
     global select_dir, history
-    # Obtém a URL do vídeo do campo link_input
-    url = link_input.get()
-    # Cria um objeto YouTube com a URL
-    yt = YouTube(url)
-    # Seleciona o stream de vídeo com a resolução mais alta
-    video_stream = yt.streams.get_highest_resolution()
+    try:
+        # Obtém a URL do vídeo do campo link_input
+        url = link_input.get()
+        # Cria um objeto YouTube com a URL
+        yt = YouTube(url)
+        # Seleciona o stream de vídeo com a resolução mais alta
+        video_stream = yt.streams.get_highest_resolution()
 
-    # Vai usar a variavel select_dir caso já tenha sido selecionada
-    if select_dir:
-        base_name = os.path.splitext(video_stream.default_filename)[0]
-        video_stream.download(select_dir, filename=f'{base_name}.mp4')
-        print("Download Completo")
-        print("Insira um novo link")
-    else:
-        # caso contrario, chama a função save_dir para obter o diretório
-        select_dir = save_dir()
+        # Vai usar a variavel select_dir caso já tenha sido selecionada
         if select_dir:
             base_name = os.path.splitext(video_stream.default_filename)[0]
-
             video_stream.download(select_dir, filename=f'{base_name}.mp4')
-            print("Download Completo")
+            ic("Download Completo")
+            ic("Insira um novo link")
         else:
-            print('Selecione um diretório')
-    # Limpa o campo de entrada após o download
-    link_input.delete(0, 'end')
-    # Após o download, registre o download no histórico
-    history.add_entry(video_stream.default_filename, url)
+            # caso contrario, chama a função save_dir para obter o diretório
+            select_dir = save_dir()
+            if select_dir:
+                base_name = os.path.splitext(video_stream.default_filename)[0]
+
+                video_stream.download(select_dir, filename=f'{base_name}.mp4')
+                ic("Download Completo")
+            else:
+                ic('Selecione um diretório')
+        # Limpa o campo de entrada após o download
+        link_input.delete(0, 'end')
+        # Após o download, registre o download no histórico
+        history.add_entry(video_stream.default_filename, url)
+    except Exception as e:
+        ic(f"Erro ao baixar o video: {e}")
 
 def save_dir():
     global select_dir  # Acessa a variável global
@@ -80,41 +84,43 @@ def save_dir():
         select_dir = new_dir  # Armazena o diretório selecionado na variável global
         return new_dir
     else:
-        print('Selecione um diretório')
+        ic('Selecione um diretório')
         return None
 
 
 def new_mp3():
     global select_dir, history
-    input_mp3 = ctk.CTkInputDialog(text="Somente audio", title="PYT MP3")
+    try:
+        input_mp3 = ctk.CTkInputDialog(text="Somente audio", title="PYT MP3")
 
-    audio_url = input_mp3.get_input()
-    yt = YouTube(audio_url)
-    # Filtra para buscar somente o primeiro audio
-    filter_mp3 = yt.streams.filter(only_audio=True).first()
+        audio_url = input_mp3.get_input()
+        yt = YouTube(audio_url)
+        # Filtra para buscar somente o primeiro audio
+        filter_mp3 = yt.streams.filter(only_audio=True).first()
 
-    if select_dir:
-        # Remove a extensão do nome do arquivo original e adiciona o sufixo
-        base_name = os.path.splitext(filter_mp3.default_filename)[0]
-        unique_filename = f"{base_name}_mp3_{int(time.time())}.mp3"
-        filter_mp3.download(select_dir, filename=unique_filename)
-        print("Download Completo")
-    else:
-        select_dir = save_dir()
         if select_dir:
             # Remove a extensão do nome do arquivo original e adiciona o sufixo
             base_name = os.path.splitext(filter_mp3.default_filename)[0]
             unique_filename = f"{base_name}_mp3_{int(time.time())}.mp3"
             filter_mp3.download(select_dir, filename=unique_filename)
-            print("Download Completo")
+            ic("Download Completo")
         else:
-            print('Selecione um diretório')
-            
-    # Limpa o campo de entrada após o download
-    link_input.delete(0, 'end')
-    # Após o download, registre o download no histórico
-    history.add_entry(filter_mp3.default_filename, audio_url)
-    
+            select_dir = save_dir()
+            if select_dir:
+                base_name = os.path.splitext(filter_mp3.default_filename)[0]
+                unique_filename = f"{base_name}_mp3_{int(time.time())}.mp3"
+                filter_mp3.download(select_dir, filename=unique_filename)
+                ic("Download Completo")
+            else:
+                ic('Selecione um diretório')
+                
+        # Limpa o campo de entrada após o download
+        link_input.delete(0, 'end')
+        # Após o download, registre o download no histórico
+        history.add_entry(filter_mp3.default_filename, audio_url)
+    except Exception as e:
+        ic(f"Erro ao baixar o áudio: {e}")
+        
     
 def show_history():
     history.display_history()
@@ -138,7 +144,7 @@ botao_dir.grid(row=2, column=1, padx=30, pady=30)
 botao_submit = ctk.CTkButton(janela, text='Baixar', command=new_download, font=ctk.CTkFont(family='roboto', size=16))
 botao_submit.grid(row=3, column=0, columnspan=2, padx=20, pady=30)
 
-botao_history = ctk.CTkButton(janela, text='Histórico', command=show_history, fg_color=azul_escuro, text_color=amarelo, width=5)
+botao_history = ctk.CTkButton(janela, text='Histórico', command=show_history, fg_color=cinza, text_color=preto, width=5)
 botao_history.grid(row=4, column=0, columnspan=2, padx=20, pady=0)
 
 
