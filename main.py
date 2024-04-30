@@ -19,16 +19,32 @@ rose_ebony = '#513b3c'
 # Criando a janela
 janela = ctk.CTk()
 janela.title("PYT")
-janela.geometry('250x300')
-
-
-# Variável global para armazenar o diretório selecionado
+# Tamanho da Janela
+janela.geometry('250x350')
+# Definindo a janela como não redimensionável
+janela.resizable(False, False)
+# Variáveis globais para armazenar o diretório selecionado
 select_dir = None
+
+# Classe para o historico de download
+class MusicDownloadHistory:
+    def __init__(self):
+        self.history = []
+# Função para adicionar
+    def add_entry(self, title, url):
+        entry = {"title": title, "url": url}
+        self.history.append(entry)
+# Função de Print em FOR 
+    def display_history(self):
+        for entry in self.history:
+            print(f"Title: {entry['title']}, URL: {entry['url']}")
+# Variavel global      
+history = MusicDownloadHistory()
 
 #  Funções
 
 def new_download():
-    global select_dir
+    global select_dir, history
     # Obtém a URL do vídeo do campo link_input
     url = link_input.get()
     # Cria um objeto YouTube com a URL
@@ -54,6 +70,8 @@ def new_download():
             print('Selecione um diretório')
     # Limpa o campo de entrada após o download
     link_input.delete(0, 'end')
+    # Após o download, registre o download no histórico
+    history.add_entry(video_stream.default_filename, url)
 
 def save_dir():
     global select_dir  # Acessa a variável global
@@ -67,7 +85,7 @@ def save_dir():
 
 
 def new_mp3():
-    global select_dir
+    global select_dir, history
     input_mp3 = ctk.CTkInputDialog(text="Somente audio", title="PYT MP3")
 
     audio_url = input_mp3.get_input()
@@ -94,7 +112,13 @@ def new_mp3():
             
     # Limpa o campo de entrada após o download
     link_input.delete(0, 'end')
-
+    # Após o download, registre o download no histórico
+    history.add_entry(filter_mp3.default_filename, audio_url)
+    
+    
+def show_history():
+    history.display_history()
+    
 # Widgets
 texto = ctk.CTkLabel(janela, text='Baixe aqui',
                     font=ctk.CTkFont(family='roboto', size=16))
@@ -104,6 +128,7 @@ link_input = ctk.CTkEntry(janela, placeholder_text='Seu link')
 link_input.grid(row=1, column=0, columnspan=2, padx=20, pady=20, sticky='ew')
 
 # Criando e organizando os botões em uma grade
+
 botao_format = ctk.CTkButton(janela, text='Formatos', command=new_mp3, fg_color=azul_escuro, text_color=amarelo, width=5)
 botao_format.grid(row=2, column=0, padx=30, pady=30)
 
@@ -112,5 +137,9 @@ botao_dir.grid(row=2, column=1, padx=30, pady=30)
 
 botao_submit = ctk.CTkButton(janela, text='Baixar', command=new_download, font=ctk.CTkFont(family='roboto', size=16))
 botao_submit.grid(row=3, column=0, columnspan=2, padx=20, pady=30)
+
+botao_history = ctk.CTkButton(janela, text='Histórico', command=show_history, fg_color=azul_escuro, text_color=amarelo, width=5)
+botao_history.grid(row=4, column=0, columnspan=2, padx=20, pady=0)
+
 
 janela.mainloop()
